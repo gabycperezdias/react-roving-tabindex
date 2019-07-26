@@ -23,6 +23,7 @@ type ReturnType = [
 export default function useRovingTabIndex(
   domElementRef: React.RefObject<any>,
   disabled: boolean,
+  isGrid?: boolean,
   id?: string
 ): ReturnType {
   // This id is stable for the life of the component:
@@ -46,22 +47,52 @@ export default function useRovingTabIndex(
       });
     };
   }, [disabled]);
-
+  
   const handleKeyDown = React.useCallback((event: React.KeyboardEvent<any>) => {
-    if (event.key === "ArrowLeft") {
+    // when it is not a grid, both arrows should move focus backwards
+    if (event.key === "ArrowLeft" || (!isGrid && event.key === "ArrowUp")) {
       context.dispatch({
         type: ActionTypes.TAB_TO_PREVIOUS,
         payload: { id: tabIndexId.current }
       });
       event.preventDefault();
-    } else if (event.key === "ArrowRight") {
+      // when it is not a grid, both arrows should move focus forward
+    } else if (event.key === "ArrowRight" || (!isGrid && event.key === "ArrowDown")) {
       context.dispatch({
         type: ActionTypes.TAB_TO_NEXT,
         payload: { id: tabIndexId.current }
       });
       event.preventDefault();
-    }
-  }, []);
+      // in a grid, should move focus to previous row
+    } else if (event.key === "ArrowUp") {
+      context.dispatch({
+        type: ActionTypes.TAB_TO_PREVIOUS_ROW,
+        payload: { id: tabIndexId.current }
+      });
+      event.preventDefault();
+      // in a grid, should move focus to next row
+    } else if (event.key === "ArrowDown") {
+      context.dispatch({
+        type: ActionTypes.TAB_TO_NEXT_ROW,
+        payload: { id: tabIndexId.current }
+      });
+      event.preventDefault();
+      // should move focus to initial element 
+    } else if (event.key === "Home") {
+      context.dispatch({
+        type: ActionTypes.TAB_TO_FIRST,
+        payload: { id: tabIndexId.current }
+      });
+      event.preventDefault();
+      // should move focus to last element
+    } else if (event.key === "End") {
+      context.dispatch({
+        type: ActionTypes.TAB_TO_LAST,
+        payload: { id: tabIndexId.current }
+      });
+      event.preventDefault();
+    } 
+  }, [isGrid]);
 
   const handleClick = React.useCallback(() => {
     context.dispatch({

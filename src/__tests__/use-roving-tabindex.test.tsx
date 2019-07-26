@@ -18,6 +18,7 @@ const TestButton = ({
   const [tabIndex, focused, handleKeyDown, handleClick] = useRovingTabIndex(
     ref,
     disabled,
+    false,
     id
   );
   return (
