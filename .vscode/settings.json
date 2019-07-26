@@ -20,8 +20,7 @@
     ".serverless/": true,
     "src/**/*.css": true,
     "build/": true,
-    "coverage/": true,
-    "dist/": true
+    "coverage/": true
   },
   "typescript.extension.sortImports.sortMethod": "path",
   "typescript.extension.sortImports.pathSortOrder": [

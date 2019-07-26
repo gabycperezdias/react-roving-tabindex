@@ -1,6 +1,6 @@
 # react-roving-tabindex
 
-> React Hooks implementation of a roving tabindex. See the storybook [here](https://www.perspectivespace.com/react-roving-tabindex/) to try it out.
+> React Hooks implementation of a roving tabindex.
 
 [![NPM](https://img.shields.io/npm/v/react-roving-tabindex.svg)](https://www.npmjs.com/package/react-roving-tabindex) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com) [![CircleCI](https://img.shields.io/circleci/project/github/stevejay/react-roving-tabindex/master.svg)](https://circleci.com/gh/stevejay/react-roving-tabindex/tree/master)
 
@@ -11,7 +11,7 @@ The roving tabindex is a useful accessibility refinement for a grouped set of in
 - the group as a whole is treated as a single tab stop, allowing the Web page as a whole to be navigated more quickly using the keyboard
 - the last selected input in the group is remembered, so when tabbing back to the group, that last selected input is the one that receives focus
 
-The left and right arrow keys are used to select inputs within the group. More information is available [here](https://www.stefanjudis.com/today-i-learned/roving-tabindex/) and [here](https://developer.mozilla.org/en-US/docs/Web/Accessibility/Keyboard-navigable_JavaScript_widgets#Managing_focus_inside_groups).
+The arrow keys are used to select inputs within the group. More information is available [here](https://www.stefanjudis.com/today-i-learned/roving-tabindex/) and [here](https://developer.mozilla.org/en-US/docs/Web/Accessibility/Keyboard-navigable_JavaScript_widgets#Managing_focus_inside_groups).
 
 ### Implementation Considerations
 
@@ -35,8 +35,6 @@ npm install --save react-roving-tabindex
 This package includes TypeScript typings.
 
 ## Usage
-
-There is a storybook for this package [here](https://www.perspectivespace.com/react-roving-tabindex/).
 
 ```tsx
 import React from "react";
@@ -86,12 +84,13 @@ const App = () => (
 );
 ```
 
-You can optionally pass a custom ID to the `useRovingTabIndex` hook as the third argument:
+You can optionally pass a custom ID to the `useRovingTabIndex` hook as the fourth argument:
 
 ```jsx
 const [tabIndex, focused, handleKeyDown, handleClick] = useRovingTabIndex(
   ref, // don't change the value of this ref
   disabled, // change this as you like
+  isGrid,
   "custom-id-1" // some custom id
 );
 ```
