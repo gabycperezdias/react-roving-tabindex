@@ -36,6 +36,8 @@ This package includes TypeScript typings.
 
 ## Usage
 
+To use the hook:
+
 ```tsx
 import React from "react";
 import {
@@ -96,6 +98,12 @@ const [tabIndex, focused, handleKeyDown, handleClick] = useRovingTabIndex(
 ```
 
 This is useful if you need to support server-side rendering. The value initially passed with be used for the lifetime of the containing component.
+
+To use as a HOC:
+
+```tsx
+withRovingTabIndex(WrappedComponent, disabled, isGrid);
+```
 
 ## License
 

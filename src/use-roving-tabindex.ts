@@ -1,6 +1,7 @@
 import React from "react";
-import { RovingTabIndexContext, ActionTypes } from "./Provider";
+import { RovingTabIndexContext } from "./Provider";
 import uniqueId from "lodash.uniqueid";
+import { onKeyDown, onClick, register, unregister, calcTabIndex } from './common';
 
 type ReturnType = [
   number,
@@ -33,76 +34,22 @@ export default function useRovingTabIndex(
   // Registering and unregistering are tied to whether the input is disabled or not.
   // Context is not in the inputs because context.dispatch is stable.
   React.useLayoutEffect(() => {
-    if (disabled) {
-      return;
-    }
-    context.dispatch({
-      type: ActionTypes.REGISTER,
-      payload: { id: tabIndexId.current, domElementRef }
-    });
+    register(context, tabIndexId.current, domElementRef, disabled);
+
     return () => {
-      context.dispatch({
-        type: ActionTypes.UNREGISTER,
-        payload: { id: tabIndexId.current }
-      });
+      unregister(context, tabIndexId.current);
     };
   }, [disabled]);
-  
+
   const handleKeyDown = React.useCallback((event: React.KeyboardEvent<any>) => {
-    // when it is not a grid, both arrows should move focus backwards
-    if (event.key === "ArrowLeft" || (!isGrid && event.key === "ArrowUp")) {
-      context.dispatch({
-        type: ActionTypes.TAB_TO_PREVIOUS,
-        payload: { id: tabIndexId.current }
-      });
-      event.preventDefault();
-      // when it is not a grid, both arrows should move focus forward
-    } else if (event.key === "ArrowRight" || (!isGrid && event.key === "ArrowDown")) {
-      context.dispatch({
-        type: ActionTypes.TAB_TO_NEXT,
-        payload: { id: tabIndexId.current }
-      });
-      event.preventDefault();
-      // in a grid, should move focus to previous row
-    } else if (event.key === "ArrowUp") {
-      context.dispatch({
-        type: ActionTypes.TAB_TO_PREVIOUS_ROW,
-        payload: { id: tabIndexId.current }
-      });
-      event.preventDefault();
-      // in a grid, should move focus to next row
-    } else if (event.key === "ArrowDown") {
-      context.dispatch({
-        type: ActionTypes.TAB_TO_NEXT_ROW,
-        payload: { id: tabIndexId.current }
-      });
-      event.preventDefault();
-      // should move focus to initial element 
-    } else if (event.key === "Home") {
-      context.dispatch({
-        type: ActionTypes.TAB_TO_FIRST,
-        payload: { id: tabIndexId.current }
-      });
-      event.preventDefault();
-      // should move focus to last element
-    } else if (event.key === "End") {
-      context.dispatch({
-        type: ActionTypes.TAB_TO_LAST,
-        payload: { id: tabIndexId.current }
-      });
-      event.preventDefault();
-    } 
+    onKeyDown(event, context, tabIndexId.current, isGrid);
   }, [isGrid]);
 
   const handleClick = React.useCallback(() => {
-    context.dispatch({
-      type: ActionTypes.CLICKED,
-      payload: { id: tabIndexId.current }
-    });
+    onClick(context, tabIndexId.current);
   }, []);
 
-  const selected = !disabled && tabIndexId.current === context.state.selectedId;
-  const tabIndex = selected ? 0 : -1;
-  const focused = selected && context.state.lastActionOrigin === "keyboard";
+  const { tabIndex, focused } = calcTabIndex(context, tabIndexId.current, disabled);
+
   return [tabIndex, focused, handleKeyDown, handleClick];
 }

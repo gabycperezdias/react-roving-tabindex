@@ -2,7 +2,35 @@ import { uniqueId } from "lodash";
 import React from "react";
 import { storiesOf } from "@storybook/react";
 import { State, Store } from "@sambego/storybook-state";
-import { RovingTabIndexProvider, useRovingTabIndex, useFocusEffect } from "..";
+import { RovingTabIndexProvider, useRovingTabIndex, useFocusEffect, withRovingTabIndex } from "..";
+import styled from 'styled-components';
+
+export interface ICellContentProps {
+  disabled?: boolean;
+  textAlign?: string;
+  width?: number;
+  type?: string;
+}
+
+export interface ICellContentAttrs {
+  tabIndex: number | undefined;
+  handleKeyDown: (e: Event) => void;
+  handleClick: (e: Event) => void;
+}
+
+export const CellContent = withRovingTabIndex(styled<ICellContentAttrs & any>('td')((props: ICellContentProps) => {
+  const { disabled } = props;
+  let disableCss = '';
+
+  if (disabled) {
+    disableCss = `pointer-events: none;`;
+  }
+
+  return `
+    text-align: 'left';
+    ${disableCss}
+  `;
+}), false, true);
 
 const store = new Store({
   active: [true, true, false, true, true]
@@ -41,54 +69,43 @@ const TestButton = ({
   );
 };
 
-const TestTd = ({
-  children
-}: {
-  disabled?: boolean;
-  children: React.ReactNode;
-}) => {
-  const id = React.useRef<string>(uniqueId());
-  const ref = React.useRef<HTMLTableCellElement>(null);
-  const [tabIndex, focused, handleKeyDown] = useRovingTabIndex(
-    ref,
-    false,
-    true
-  );
-  useFocusEffect(focused, ref);
-  return (
-    <td
-      ref={ref}
-      id={id.current}
-      tabIndex={tabIndex}
-      onKeyDown={handleKeyDown}
-    >
-      {children}
-    </td>
-  );
-};
+class TestTd extends React.Component {
+  private ref: React.RefObject<HTMLTableCellElement>;
+
+  public constructor(props: object) {
+    super(props);
+
+    this.ref = React.createRef<HTMLTableCellElement>();
+  }
+  public render() {
+    return <CellContent ref={this.ref}>
+      {this.props.children}
+    </CellContent>
+  };
+}
 
 storiesOf("Button", module).add("Text", () => (
   <React.Fragment>
     <RovingTabIndexProvider>
-      <table style={{'width': '100%'}}>
+      <table style={{ 'width': '100%' }}>
         <tbody>
           <tr>
-            <TestTd>1</TestTd>
-            <TestTd>2</TestTd>
-            <TestTd>3</TestTd>
-            <TestTd>4</TestTd>
+            <TestTd><span>1</span></TestTd>
+            <TestTd><span>2</span></TestTd>
+            <TestTd><span>3</span></TestTd>
+            <TestTd><span>4</span></TestTd>
           </tr>
           <tr>
-            <TestTd>5</TestTd>
-            <TestTd>6</TestTd>
-            <TestTd>7</TestTd>
-            <TestTd>8</TestTd>
+            <TestTd><span>5</span></TestTd>
+            <TestTd><span>6</span></TestTd>
+            <TestTd><span>7</span></TestTd>
+            <TestTd><span>8</span></TestTd>
           </tr>
           <tr>
-            <TestTd>9</TestTd>
-            <TestTd>10</TestTd>
-            <TestTd>11</TestTd>
-            <TestTd>12</TestTd>
+            <TestTd><span>9</span></TestTd>
+            <TestTd><span>10</span></TestTd>
+            <TestTd><span>11</span></TestTd>
+            <TestTd><span>12</span></TestTd>
           </tr>
         </tbody>
       </table>

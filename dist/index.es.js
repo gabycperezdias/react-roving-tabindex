@@ -17,6 +17,20 @@ MERCHANTABLITY OR NON-INFRINGEMENT.
 See the Apache Version 2.0 License for specific language governing permissions
 and limitations under the License.
 ***************************************************************************** */
+/* global Reflect, Promise */
+
+var extendStatics = function(d, b) {
+    extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return extendStatics(d, b);
+};
+
+function __extends(d, b) {
+    extendStatics(d, b);
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+}
 
 var __assign = function() {
     __assign = Object.assign || function __assign(t) {
@@ -28,6 +42,16 @@ var __assign = function() {
     };
     return __assign.apply(this, arguments);
 };
+
+function __rest(s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) if (e.indexOf(p[i]) < 0)
+            t[p[i]] = s[p[i]];
+    return t;
+}
 
 var ActionTypes;
 (function (ActionTypes) {
@@ -41,6 +65,8 @@ var ActionTypes;
     ActionTypes["TAB_TO_LAST"] = "TAB_TO_LAST";
     ActionTypes["CLICKED"] = "CLICKED";
 })(ActionTypes || (ActionTypes = {}));
+
+//const DOCUMENT_POSITION_PRECEDING = 2;
 function reducer(state, action) {
     switch (action.type) {
         case ActionTypes.REGISTER: {
@@ -150,6 +176,87 @@ var Provider = function (_a) {
     return (React.createElement(RovingTabIndexContext.Provider, { value: context }, children));
 };
 
+var onKeyDown = function (event, context, tabIndexId, isGrid) {
+    // when it is not a grid, both arrows should move focus backwards
+    if (event.key === "ArrowLeft" || (!isGrid && event.key === "ArrowUp")) {
+        context.dispatch({
+            type: ActionTypes.TAB_TO_PREVIOUS,
+            payload: { id: tabIndexId }
+        });
+        event.preventDefault();
+        // when it is not a grid, both arrows should move focus forward
+    }
+    else if (event.key === "ArrowRight" || (!isGrid && event.key === "ArrowDown")) {
+        context.dispatch({
+            type: ActionTypes.TAB_TO_NEXT,
+            payload: { id: tabIndexId }
+        });
+        event.preventDefault();
+        // in a grid, should move focus to previous row
+    }
+    else if (event.key === "ArrowUp") {
+        context.dispatch({
+            type: ActionTypes.TAB_TO_PREVIOUS_ROW,
+            payload: { id: tabIndexId }
+        });
+        event.preventDefault();
+        // in a grid, should move focus to next row
+    }
+    else if (event.key === "ArrowDown") {
+        context.dispatch({
+            type: ActionTypes.TAB_TO_NEXT_ROW,
+            payload: { id: tabIndexId }
+        });
+        event.preventDefault();
+        // should move focus to initial element 
+    }
+    else if (event.key === "Home") {
+        context.dispatch({
+            type: ActionTypes.TAB_TO_FIRST,
+            payload: { id: tabIndexId }
+        });
+        event.preventDefault();
+        // should move focus to last element
+    }
+    else if (event.key === "End") {
+        context.dispatch({
+            type: ActionTypes.TAB_TO_LAST,
+            payload: { id: tabIndexId }
+        });
+        event.preventDefault();
+    }
+};
+var onClick = function (context, tabIndexId) {
+    context.dispatch({
+        type: ActionTypes.CLICKED,
+        payload: { id: tabIndexId }
+    });
+};
+var register = function (context, tabIndexId, domElementRef, disabled) {
+    if (disabled) {
+        return;
+    }
+    context.dispatch({
+        type: ActionTypes.REGISTER,
+        payload: { id: tabIndexId, domElementRef: domElementRef }
+    });
+};
+var unregister = function (context, tabIndexId) {
+    context.dispatch({
+        type: ActionTypes.UNREGISTER,
+        payload: { id: tabIndexId }
+    });
+};
+var calcTabIndex = function (context, tabIndexId, disabled) {
+    var selected = !disabled && tabIndexId === context.state.selectedId;
+    var tabIndex = selected ? 0 : -1;
+    var focused = selected && context.state.lastActionOrigin === "keyboard";
+    return {
+        tabIndex: tabIndex,
+        focused: focused
+    };
+};
+
 // domElementRef:
 //   - a React DOM element ref of the DOM element that is the focus target
 //   - this must be the same DOM element for the lifecycle of the component
@@ -168,79 +275,18 @@ function useRovingTabIndex(domElementRef, disabled, isGrid, id) {
     // Registering and unregistering are tied to whether the input is disabled or not.
     // Context is not in the inputs because context.dispatch is stable.
     React.useLayoutEffect(function () {
-        if (disabled) {
-            return;
-        }
-        context.dispatch({
-            type: ActionTypes.REGISTER,
-            payload: { id: tabIndexId.current, domElementRef: domElementRef }
-        });
+        register(context, tabIndexId.current, domElementRef, disabled);
         return function () {
-            context.dispatch({
-                type: ActionTypes.UNREGISTER,
-                payload: { id: tabIndexId.current }
-            });
+            unregister(context, tabIndexId.current);
         };
     }, [disabled]);
     var handleKeyDown = React.useCallback(function (event) {
-        // when it is not a grid, both arrows should move focus backwards
-        if (event.key === "ArrowLeft" || (!isGrid && event.key === "ArrowUp")) {
-            context.dispatch({
-                type: ActionTypes.TAB_TO_PREVIOUS,
-                payload: { id: tabIndexId.current }
-            });
-            event.preventDefault();
-            // when it is not a grid, both arrows should move focus forward
-        }
-        else if (event.key === "ArrowRight" || (!isGrid && event.key === "ArrowDown")) {
-            context.dispatch({
-                type: ActionTypes.TAB_TO_NEXT,
-                payload: { id: tabIndexId.current }
-            });
-            event.preventDefault();
-            // in a grid, should move focus to previous row
-        }
-        else if (event.key === "ArrowUp") {
-            context.dispatch({
-                type: ActionTypes.TAB_TO_PREVIOUS_ROW,
-                payload: { id: tabIndexId.current }
-            });
-            event.preventDefault();
-            // in a grid, should move focus to next row
-        }
-        else if (event.key === "ArrowDown") {
-            context.dispatch({
-                type: ActionTypes.TAB_TO_NEXT_ROW,
-                payload: { id: tabIndexId.current }
-            });
-            event.preventDefault();
-            // should move focus to initial element 
-        }
-        else if (event.key === "Home") {
-            context.dispatch({
-                type: ActionTypes.TAB_TO_FIRST,
-                payload: { id: tabIndexId.current }
-            });
-            event.preventDefault();
-            // should move focus to last element
-        }
-        else if (event.key === "End") {
-            context.dispatch({
-                type: ActionTypes.TAB_TO_LAST,
-                payload: { id: tabIndexId.current }
-            });
-            event.preventDefault();
-        }
+        onKeyDown(event, context, tabIndexId.current, isGrid);
     }, [isGrid]);
     var handleClick = React.useCallback(function () {
-        context.dispatch({
-            type: ActionTypes.CLICKED,
-            payload: { id: tabIndexId.current }
-        });
+        onClick(context, tabIndexId.current);
     }, []);
-    var selected = !disabled && tabIndexId.current === context.state.selectedId;
-    var tabIndex = selected ? 0 : -1;
-    var focused = selected && context.state.lastActionOrigin === "keyboard";
+    var _a = calcTabIndex(context, tabIndexId.current, disabled), tabIndex = _a.tabIndex, focused = _a.focused;
     return [tabIndex, focused, handleKeyDown, handleClick];
 }
 
@@ -254,5 +300,59 @@ function useFocusEffect(focused, ref) {
     }, [focused]);
 }
 
-export { Provider as RovingTabIndexProvider, useRovingTabIndex, useFocusEffect };
+var withRovingTabIndex = function (WrappedComponent, disabled, isGrid) {
+    if (disabled === void 0) { disabled = false; }
+    var WithRovingTabIndexElem = /** @class */ (function (_super) {
+        __extends(WithRovingTabIndexElem, _super);
+        function WithRovingTabIndexElem(props) {
+            var _this = _super.call(this, props) || this;
+            _this.handleKeyDown = function (event) {
+                var tabIndexId = _this.tabIndexId;
+                var _a = _this.props, isGrid = _a.isGrid, context = _a.context;
+                onKeyDown(event, context, tabIndexId, isGrid);
+            };
+            _this.handleClick = function () {
+                var tabIndexId = _this.tabIndexId;
+                var context = _this.props.context;
+                onClick(context, tabIndexId);
+            };
+            // This id is stable for the life of the component:
+            _this.tabIndexId = props.id || uniqueId("roving-tabindex_");
+            return _this;
+        }
+        // Registering and unregistering are tied to whether the input is disabled or not.
+        // Context is not in the inputs because context.dispatch is stable.
+        WithRovingTabIndexElem.prototype.componentDidMount = function () {
+            var _a = this.props, disabled = _a.disabled, domElementRef = _a.domElementRef, context = _a.context;
+            register(context, this.tabIndexId, domElementRef, disabled);
+        };
+        WithRovingTabIndexElem.prototype.isFocused = function (props) {
+            var disabled = props.disabled, context = props.context;
+            var selected = !disabled && this.tabIndexId === context.state.selectedId;
+            var focused = selected && context.state.lastActionOrigin === "keyboard";
+            return focused;
+        };
+        WithRovingTabIndexElem.prototype.componentDidUpdate = function (prevProps) {
+            var domElementRef = this.props.domElementRef;
+            if (this.isFocused(this.props) && !this.isFocused(prevProps) && domElementRef) {
+                domElementRef.current.focus();
+            }
+        };
+        WithRovingTabIndexElem.prototype.componentWillUnmount = function () {
+            unregister(this.props.context, this.tabIndexId);
+        };
+        WithRovingTabIndexElem.prototype.render = function () {
+            var _a = this, tabIndexId = _a.tabIndexId, handleKeyDown = _a.handleKeyDown, handleClick = _a.handleClick;
+            var _b = this.props, context = _b.context, disabled = _b.disabled, domElementRef = _b.domElementRef, rest = __rest(_b, ["context", "disabled", "domElementRef"]);
+            var childProps = __assign({}, rest, calcTabIndex(context, tabIndexId, disabled), { ref: domElementRef, onKeyDown: handleKeyDown, onClick: handleClick });
+            return React.createElement(WrappedComponent, __assign({}, childProps));
+        };
+        return WithRovingTabIndexElem;
+    }(React.Component));
+    return React.forwardRef(function (props, ref) {
+        return React.createElement(RovingTabIndexContext.Consumer, null, function (value) { return React.createElement(WithRovingTabIndexElem, __assign({}, props, { disabled: disabled, isGrid: isGrid, context: value, domElementRef: ref })); });
+    });
+};
+
+export { Provider as RovingTabIndexProvider, useRovingTabIndex, useFocusEffect, withRovingTabIndex };
 //# sourceMappingURL=index.es.js.map

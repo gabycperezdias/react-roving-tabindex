@@ -5,9 +5,9 @@ module.exports = (baseConfig, env, config) => {
     test: /\.(ts|tsx)$/,
     use: [
       {
-        loader: require.resolve("awesome-typescript-loader")
+        loader: require.resolve('babel-loader'),
       }
-    ]
+    ],
   });
   config.resolve.extensions.push(".ts", ".tsx");
   return config;
