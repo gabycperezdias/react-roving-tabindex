@@ -7,6 +7,7 @@ import { State, Action, Context, Props, ActionTypes } from './types';
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
+    case ActionTypes.UPDATE:
     case ActionTypes.REGISTER: {
       const newTabStop = action.payload;
       if (state.tabStops.length === 0) {
@@ -20,7 +21,13 @@ function reducer(state: State, action: Action): State {
         state.tabStops,
         tabStop => tabStop.id === newTabStop.id
       );
+
       if (index >= 0) {
+        if (action.type === ActionTypes.UPDATE) {
+          state.tabStops[index].disabled = newTabStop.disabled;
+
+          return state;
+        }
         warning(false, `${newTabStop.id} tab stop already registered`);
         return state;
       }
@@ -54,19 +61,23 @@ function reducer(state: State, action: Action): State {
     case ActionTypes.TAB_TO_PREVIOUS:
     case ActionTypes.TAB_TO_NEXT: {
       const id = action.payload.id;
-      const index = findIndex(state.tabStops, tabStop => tabStop.id === id);
+      let index = findIndex(state.tabStops, tabStop => tabStop.id === id);
       if (index === -1) {
         warning(false, `${id} tab stop not registered`);
         return state;
       }
-      const newIndex =
-        action.type === ActionTypes.TAB_TO_PREVIOUS
+      let newIndex = 0;
+      do {
+        newIndex = action.type === ActionTypes.TAB_TO_PREVIOUS
           ? index <= 0
             ? state.tabStops.length - 1
             : index - 1
           : index >= state.tabStops.length - 1
             ? 0
             : index + 1;
+        index = newIndex;
+      } while (state.tabStops[newIndex].disabled);
+
       return {
         ...state,
         lastActionOrigin: "keyboard",
@@ -76,16 +87,17 @@ function reducer(state: State, action: Action): State {
     case ActionTypes.TAB_TO_PREVIOUS_ROW:
     case ActionTypes.TAB_TO_NEXT_ROW: {
       const id = action.payload.id;
-      const indexOverall = findIndex(state.tabStops, tabStop => tabStop.id === id);
-      const indexInRow = Array.prototype.indexOf.call(state.tabStops[indexOverall].domElementRef.current.parentNode.childNodes, state.tabStops[indexOverall].domElementRef.current);
-      const stepToMove = state.tabStops[indexOverall].domElementRef.current.parentNode.childNodes.length;
+      let indexOverall = findIndex(state.tabStops, tabStop => tabStop.id === id);
+      let indexInRow = Array.prototype.indexOf.call(state.tabStops[indexOverall].domElementRef.current.parentNode.childNodes, state.tabStops[indexOverall].domElementRef.current);
+      let stepToMove = state.tabStops[indexOverall].domElementRef.current.parentNode.childNodes.length;
 
       if (indexOverall === -1) {
         warning(false, `${id} tab stop not registered`);
         return state;
       }
-      const newIndex =
-        action.type === ActionTypes.TAB_TO_PREVIOUS_ROW ?
+      let newIndex = 0;
+      do {
+        newIndex = action.type === ActionTypes.TAB_TO_PREVIOUS_ROW ?
           // if first row
           indexOverall - stepToMove < 0 ?
             (state.tabStops.length) - (stepToMove - indexInRow)
@@ -94,6 +106,10 @@ function reducer(state: State, action: Action): State {
           : indexOverall + stepToMove > state.tabStops.length - 1 ?
             indexInRow
             : indexOverall + stepToMove;
+        indexOverall = newIndex;
+        indexInRow = Array.prototype.indexOf.call(state.tabStops[indexOverall].domElementRef.current.parentNode.childNodes, state.tabStops[indexOverall].domElementRef.current);
+        stepToMove = state.tabStops[indexOverall].domElementRef.current.parentNode.childNodes.length;
+      } while (state.tabStops[newIndex].disabled);
 
       return {
         ...state,

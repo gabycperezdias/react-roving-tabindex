@@ -34,7 +34,7 @@ export default function useRovingTabIndex(
   // Registering and unregistering are tied to whether the input is disabled or not.
   // Context is not in the inputs because context.dispatch is stable.
   React.useLayoutEffect(() => {
-    register(context, tabIndexId.current, domElementRef, disabled);
+    register(context, tabIndexId.current, domElementRef, disabled, isGrid);
 
     return () => {
       unregister(context, tabIndexId.current);

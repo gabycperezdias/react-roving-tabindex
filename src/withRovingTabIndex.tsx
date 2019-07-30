@@ -2,9 +2,9 @@ import React from 'react';
 import { RovingTabIndexContext } from "./Provider";
 import uniqueId from "lodash.uniqueid";
 import { IUseRovingProps, INewProps } from './types';
-import { onKeyDown, onClick, register, unregister, calcTabIndex } from './common';
+import { onKeyDown, onClick, register, unregister, calcTabIndex, changeDisabled } from './common';
 
-export const withRovingTabIndex = <OriginalProps extends object>(WrappedComponent: React.ComponentType<OriginalProps>, disabled: boolean = false, isGrid?: boolean) => {
+export const withRovingTabIndex = <OriginalProps extends object>(WrappedComponent: React.ComponentType<OriginalProps>, isGrid?: boolean) => {
   type HocProps = OriginalProps & IUseRovingProps & INewProps;
   class WithRovingTabIndexElem extends React.Component<OriginalProps & IUseRovingProps> {
     public tabIndexId: string;
@@ -19,9 +19,9 @@ export const withRovingTabIndex = <OriginalProps extends object>(WrappedComponen
     // Registering and unregistering are tied to whether the input is disabled or not.
     // Context is not in the inputs because context.dispatch is stable.
     public componentDidMount() {
-      const { disabled, domElementRef, context } = this.props;
+      const { disabled, domElementRef, context, isGrid } = this.props;
 
-      register(context, this.tabIndexId, domElementRef, disabled);
+      register(context, this.tabIndexId, domElementRef, disabled, isGrid);
     }
 
     isFocused(props: IUseRovingProps & OriginalProps) {
@@ -34,9 +34,12 @@ export const withRovingTabIndex = <OriginalProps extends object>(WrappedComponen
     }
 
     public componentDidUpdate(prevProps: IUseRovingProps & OriginalProps) {
-      const { domElementRef } = this.props;
+      const { domElementRef, context, disabled } = this.props;
       if (this.isFocused(this.props) && !this.isFocused(prevProps) && domElementRef) {
         (domElementRef.current as any).focus();
+      }
+      if (disabled !== prevProps.disabled && this.props.isGrid) {
+        changeDisabled(context, this.tabIndexId, domElementRef, disabled);
       }
     }
 
@@ -76,7 +79,7 @@ export const withRovingTabIndex = <OriginalProps extends object>(WrappedComponen
 
   return React.forwardRef<typeof WrappedComponent, OriginalProps>((props, ref) => {
     return <RovingTabIndexContext.Consumer>
-      {value => <WithRovingTabIndexElem {...props as HocProps} disabled={disabled} isGrid={isGrid} context={value} domElementRef={ref} />}
+      {value => <WithRovingTabIndexElem {...props as HocProps} isGrid={isGrid} context={value} domElementRef={ref} />}
     </RovingTabIndexContext.Consumer>;
   });
 };

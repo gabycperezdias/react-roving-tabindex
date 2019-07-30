@@ -53,13 +53,26 @@ export const onClick = (context: Context, tabIndexId: string): void => {
   });
 }
 
-export const register = (context: Context, tabIndexId: string, domElementRef: React.RefObject<any>, disabled: boolean): void => {
+export const register = (context: Context, tabIndexId: string, domElementRef: React.RefObject<any>, disabled: boolean, isGrid?: boolean): void => {
   if (disabled) {
+    if (isGrid) {
+      context.dispatch({
+        type: ActionTypes.REGISTER,
+        payload: { id: tabIndexId, domElementRef, disabled }
+      });
+    }
     return;
   }
   context.dispatch({
     type: ActionTypes.REGISTER,
     payload: { id: tabIndexId, domElementRef }
+  });
+}
+
+export const changeDisabled = (context: Context, tabIndexId: string, domElementRef: React.RefObject<any>, disabled: boolean): void => {
+  context.dispatch({
+    type: ActionTypes.UPDATE,
+    payload: { id: tabIndexId, domElementRef, disabled }
   });
 }
 
