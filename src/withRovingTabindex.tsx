@@ -4,7 +4,7 @@ import uniqueId from "lodash.uniqueid";
 import { IUseRovingProps, INewProps } from './types';
 import { onKeyDown, onClick, register, unregister, calcTabIndex, changeDisabled } from './common';
 
-export const withRovingTabIndex = <OriginalProps extends object>(WrappedComponent: React.ComponentType<OriginalProps>, isGrid?: boolean) => {
+export const withRovingTabindex = <OriginalProps extends object>(WrappedComponent: React.ComponentType<OriginalProps>, isGrid?: boolean) => {
   type HocProps = OriginalProps & IUseRovingProps & INewProps;
   class WithRovingTabIndexElem extends React.Component<OriginalProps & IUseRovingProps> {
     public tabIndexId: string;

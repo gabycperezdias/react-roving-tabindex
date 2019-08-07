@@ -64,11 +64,13 @@ var ActionTypes;
     ActionTypes["TAB_TO_FIRST"] = "TAB_TO_FIRST";
     ActionTypes["TAB_TO_LAST"] = "TAB_TO_LAST";
     ActionTypes["CLICKED"] = "CLICKED";
+    ActionTypes["UPDATE"] = "UPDATE";
 })(ActionTypes || (ActionTypes = {}));
 
 //const DOCUMENT_POSITION_PRECEDING = 2;
 function reducer(state, action) {
     switch (action.type) {
+        case ActionTypes.UPDATE:
         case ActionTypes.REGISTER: {
             var newTabStop_1 = action.payload;
             if (state.tabStops.length === 0) {
@@ -76,6 +78,10 @@ function reducer(state, action) {
             }
             var index = findIndex(state.tabStops, function (tabStop) { return tabStop.id === newTabStop_1.id; });
             if (index >= 0) {
+                if (action.type === ActionTypes.UPDATE) {
+                    state.tabStops[index].disabled = newTabStop_1.disabled;
+                    return state;
+                }
                 warning(false, newTabStop_1.id + " tab stop already registered");
                 return state;
             }
@@ -104,13 +110,17 @@ function reducer(state, action) {
                 warning(false, id_2 + " tab stop not registered");
                 return state;
             }
-            var newIndex = action.type === ActionTypes.TAB_TO_PREVIOUS
-                ? index <= 0
-                    ? state.tabStops.length - 1
-                    : index - 1
-                : index >= state.tabStops.length - 1
-                    ? 0
-                    : index + 1;
+            var newIndex = 0;
+            do {
+                newIndex = action.type === ActionTypes.TAB_TO_PREVIOUS
+                    ? index <= 0
+                        ? state.tabStops.length - 1
+                        : index - 1
+                    : index >= state.tabStops.length - 1
+                        ? 0
+                        : index + 1;
+                index = newIndex;
+            } while (state.tabStops[newIndex].disabled);
             return __assign({}, state, { lastActionOrigin: "keyboard", selectedId: state.tabStops[newIndex].id });
         }
         case ActionTypes.TAB_TO_PREVIOUS_ROW:
@@ -123,15 +133,21 @@ function reducer(state, action) {
                 warning(false, id_3 + " tab stop not registered");
                 return state;
             }
-            var newIndex = action.type === ActionTypes.TAB_TO_PREVIOUS_ROW ?
-                // if first row
-                indexOverall - stepToMove < 0 ?
-                    (state.tabStops.length) - (stepToMove - indexInRow)
-                    : indexOverall - stepToMove
-                // if last row  
-                : indexOverall + stepToMove > state.tabStops.length - 1 ?
-                    indexInRow
-                    : indexOverall + stepToMove;
+            var newIndex = 0;
+            do {
+                newIndex = action.type === ActionTypes.TAB_TO_PREVIOUS_ROW ?
+                    // if first row
+                    indexOverall - stepToMove < 0 ?
+                        (state.tabStops.length) - (stepToMove - indexInRow)
+                        : indexOverall - stepToMove
+                    // if last row  
+                    : indexOverall + stepToMove > state.tabStops.length - 1 ?
+                        indexInRow
+                        : indexOverall + stepToMove;
+                indexOverall = newIndex;
+                indexInRow = Array.prototype.indexOf.call(state.tabStops[indexOverall].domElementRef.current.parentNode.childNodes, state.tabStops[indexOverall].domElementRef.current);
+                stepToMove = state.tabStops[indexOverall].domElementRef.current.parentNode.childNodes.length;
+            } while (state.tabStops[newIndex].disabled);
             return __assign({}, state, { lastActionOrigin: "keyboard", selectedId: state.tabStops[newIndex].id });
         }
         case ActionTypes.TAB_TO_FIRST:
@@ -232,13 +248,25 @@ var onClick = function (context, tabIndexId) {
         payload: { id: tabIndexId }
     });
 };
-var register = function (context, tabIndexId, domElementRef, disabled) {
+var register = function (context, tabIndexId, domElementRef, disabled, isGrid) {
     if (disabled) {
+        if (isGrid) {
+            context.dispatch({
+                type: ActionTypes.REGISTER,
+                payload: { id: tabIndexId, domElementRef: domElementRef, disabled: disabled }
+            });
+        }
         return;
     }
     context.dispatch({
         type: ActionTypes.REGISTER,
         payload: { id: tabIndexId, domElementRef: domElementRef }
+    });
+};
+var changeDisabled = function (context, tabIndexId, domElementRef, disabled) {
+    context.dispatch({
+        type: ActionTypes.UPDATE,
+        payload: { id: tabIndexId, domElementRef: domElementRef, disabled: disabled }
     });
 };
 var unregister = function (context, tabIndexId) {
@@ -275,7 +303,7 @@ function useRovingTabIndex(domElementRef, disabled, isGrid, id) {
     // Registering and unregistering are tied to whether the input is disabled or not.
     // Context is not in the inputs because context.dispatch is stable.
     React.useLayoutEffect(function () {
-        register(context, tabIndexId.current, domElementRef, disabled);
+        register(context, tabIndexId.current, domElementRef, disabled, isGrid);
         return function () {
             unregister(context, tabIndexId.current);
         };
@@ -300,8 +328,7 @@ function useFocusEffect(focused, ref) {
     }, [focused]);
 }
 
-var withRovingTabIndex = function (WrappedComponent, disabled, isGrid) {
-    if (disabled === void 0) { disabled = false; }
+var withRovingTabindex = function (WrappedComponent, isGrid) {
     var WithRovingTabIndexElem = /** @class */ (function (_super) {
         __extends(WithRovingTabIndexElem, _super);
         function WithRovingTabIndexElem(props) {
@@ -323,8 +350,8 @@ var withRovingTabIndex = function (WrappedComponent, disabled, isGrid) {
         // Registering and unregistering are tied to whether the input is disabled or not.
         // Context is not in the inputs because context.dispatch is stable.
         WithRovingTabIndexElem.prototype.componentDidMount = function () {
-            var _a = this.props, disabled = _a.disabled, domElementRef = _a.domElementRef, context = _a.context;
-            register(context, this.tabIndexId, domElementRef, disabled);
+            var _a = this.props, disabled = _a.disabled, domElementRef = _a.domElementRef, context = _a.context, isGrid = _a.isGrid;
+            register(context, this.tabIndexId, domElementRef, disabled, isGrid);
         };
         WithRovingTabIndexElem.prototype.isFocused = function (props) {
             var disabled = props.disabled, context = props.context;
@@ -333,9 +360,12 @@ var withRovingTabIndex = function (WrappedComponent, disabled, isGrid) {
             return focused;
         };
         WithRovingTabIndexElem.prototype.componentDidUpdate = function (prevProps) {
-            var domElementRef = this.props.domElementRef;
+            var _a = this.props, domElementRef = _a.domElementRef, context = _a.context, disabled = _a.disabled;
             if (this.isFocused(this.props) && !this.isFocused(prevProps) && domElementRef) {
                 domElementRef.current.focus();
+            }
+            if (disabled !== prevProps.disabled && this.props.isGrid) {
+                changeDisabled(context, this.tabIndexId, domElementRef, disabled);
             }
         };
         WithRovingTabIndexElem.prototype.componentWillUnmount = function () {
@@ -350,9 +380,9 @@ var withRovingTabIndex = function (WrappedComponent, disabled, isGrid) {
         return WithRovingTabIndexElem;
     }(React.Component));
     return React.forwardRef(function (props, ref) {
-        return React.createElement(RovingTabIndexContext.Consumer, null, function (value) { return React.createElement(WithRovingTabIndexElem, __assign({}, props, { disabled: disabled, isGrid: isGrid, context: value, domElementRef: ref })); });
+        return React.createElement(RovingTabIndexContext.Consumer, null, function (value) { return React.createElement(WithRovingTabIndexElem, __assign({}, props, { isGrid: isGrid, context: value, domElementRef: ref })); });
     });
 };
 
-export { Provider as RovingTabIndexProvider, useRovingTabIndex, useFocusEffect, withRovingTabIndex };
+export { Provider as RovingTabIndexProvider, useRovingTabIndex, useFocusEffect, withRovingTabindex };
 //# sourceMappingURL=index.es.js.map

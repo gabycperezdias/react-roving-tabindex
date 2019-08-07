@@ -14,6 +14,7 @@ export declare type INewProps = {
 export declare type TabStop = {
     id: string;
     domElementRef: React.RefObject<any>;
+    disabled?: boolean;
 };
 export declare type State = {
     selectedId: string | null;
@@ -36,7 +37,8 @@ export declare enum ActionTypes {
     TAB_TO_NEXT_ROW = "TAB_TO_NEXT_ROW",
     TAB_TO_FIRST = "TAB_TO_FIRST",
     TAB_TO_LAST = "TAB_TO_LAST",
-    CLICKED = "CLICKED"
+    CLICKED = "CLICKED",
+    UPDATE = "UPDATE"
 }
 export declare type Action = {
     type: ActionTypes.REGISTER;
@@ -81,4 +83,7 @@ export declare type Action = {
     payload: {
         id: TabStop["id"];
     };
+} | {
+    type: ActionTypes.UPDATE;
+    payload: TabStop;
 };
