@@ -4,7 +4,6 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 
-var findIndex = _interopDefault(require('array-find-index'));
 var React = _interopDefault(require('react'));
 var warning = _interopDefault(require('warning'));
 var uniqueId = _interopDefault(require('lodash.uniqueid'));
@@ -82,7 +81,7 @@ function reducer(state, action) {
             if (state.tabStops.length === 0) {
                 return __assign({}, state, { selectedId: newTabStop_1.id, tabStops: [newTabStop_1] });
             }
-            var index = findIndex(state.tabStops, function (tabStop) { return tabStop.id === newTabStop_1.id; });
+            var index = state.tabStops.findIndex(function (tabStop) { return tabStop.id === newTabStop_1.id; });
             if (index >= 0) {
                 if (action.type === ActionTypes.UPDATE) {
                     state.tabStops[index].disabled = newTabStop_1.disabled;
@@ -111,7 +110,7 @@ function reducer(state, action) {
         case ActionTypes.TAB_TO_PREVIOUS:
         case ActionTypes.TAB_TO_NEXT: {
             var id_2 = action.payload.id;
-            var index = findIndex(state.tabStops, function (tabStop) { return tabStop.id === id_2; });
+            var index = state.tabStops.findIndex(function (tabStop) { return tabStop.id === id_2; });
             if (index === -1) {
                 warning(false, id_2 + " tab stop not registered");
                 return state;
@@ -132,7 +131,7 @@ function reducer(state, action) {
         case ActionTypes.TAB_TO_PREVIOUS_ROW:
         case ActionTypes.TAB_TO_NEXT_ROW: {
             var id_3 = action.payload.id;
-            var indexOverall = findIndex(state.tabStops, function (tabStop) { return tabStop.id === id_3; });
+            var indexOverall = state.tabStops.findIndex(function (tabStop) { return tabStop.id === id_3; });
             var indexInRow = Array.prototype.indexOf.call(state.tabStops[indexOverall].domElementRef.current.parentNode.childNodes, state.tabStops[indexOverall].domElementRef.current);
             var stepToMove = state.tabStops[indexOverall].domElementRef.current.parentNode.childNodes.length;
             if (indexOverall === -1) {
@@ -159,7 +158,7 @@ function reducer(state, action) {
         case ActionTypes.TAB_TO_FIRST:
         case ActionTypes.TAB_TO_LAST: {
             var id_4 = action.payload.id;
-            var index = findIndex(state.tabStops, function (tabStop) { return tabStop.id === id_4; });
+            var index = state.tabStops.findIndex(function (tabStop) { return tabStop.id === id_4; });
             if (index === -1) {
                 warning(false, id_4 + " tab stop not registered");
                 return state;

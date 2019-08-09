@@ -1,4 +1,3 @@
-import findIndex from "array-find-index";
 import React from "react";
 import warning from "warning";
 import { State, Action, Context, Props, ActionTypes } from './types';
@@ -17,8 +16,7 @@ function reducer(state: State, action: Action): State {
           tabStops: [newTabStop]
         };
       }
-      const index = findIndex(
-        state.tabStops,
+      const index = state.tabStops.findIndex(
         tabStop => tabStop.id === newTabStop.id
       );
 
@@ -61,7 +59,7 @@ function reducer(state: State, action: Action): State {
     case ActionTypes.TAB_TO_PREVIOUS:
     case ActionTypes.TAB_TO_NEXT: {
       const id = action.payload.id;
-      let index = findIndex(state.tabStops, tabStop => tabStop.id === id);
+      let index = state.tabStops.findIndex(tabStop => tabStop.id === id);
       if (index === -1) {
         warning(false, `${id} tab stop not registered`);
         return state;
@@ -87,7 +85,7 @@ function reducer(state: State, action: Action): State {
     case ActionTypes.TAB_TO_PREVIOUS_ROW:
     case ActionTypes.TAB_TO_NEXT_ROW: {
       const id = action.payload.id;
-      let indexOverall = findIndex(state.tabStops, tabStop => tabStop.id === id);
+      let indexOverall = state.tabStops.findIndex(tabStop => tabStop.id === id);
       let indexInRow = Array.prototype.indexOf.call(state.tabStops[indexOverall].domElementRef.current.parentNode.childNodes, state.tabStops[indexOverall].domElementRef.current);
       let stepToMove = state.tabStops[indexOverall].domElementRef.current.parentNode.childNodes.length;
 
@@ -120,7 +118,7 @@ function reducer(state: State, action: Action): State {
     case ActionTypes.TAB_TO_FIRST:
     case ActionTypes.TAB_TO_LAST: {
       const id = action.payload.id;
-      const index = findIndex(state.tabStops, tabStop => tabStop.id === id);
+      const index = state.tabStops.findIndex(tabStop => tabStop.id === id);
       if (index === -1) {
         warning(false, `${id} tab stop not registered`);
         return state;
